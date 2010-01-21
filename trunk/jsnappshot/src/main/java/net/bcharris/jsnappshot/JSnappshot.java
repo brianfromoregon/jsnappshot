@@ -38,9 +38,6 @@ public class JSnappshot {
         }
         byte[] serializedForm = baos.toByteArray();
 
-        // Read the object back from memory, but using a custom ClassLoader that always reloads the classes from
-        // scratch.  This way, we avoid the system's Class cache thereby discovering which classes are actually
-        // required for deserialization.
         final HashMap<String, byte[]> allClasses = new HashMap<String, byte[]>();
         final HashMap<String, byte[]> allResources = new HashMap<String, byte[]>();
         new ClasspathWalker(Pattern.compile(".*\\.(class|properties)$", Pattern.CASE_INSENSITIVE), new ClasspathWalker.Visitor() {
