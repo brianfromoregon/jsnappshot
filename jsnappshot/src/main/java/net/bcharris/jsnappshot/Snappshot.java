@@ -34,6 +34,7 @@ public class Snappshot implements Serializable {
 
     private static class SerializationProxy implements Serializable {
 
+        private static final long serialVersionUID = 0L;
         private final byte[] object;
         private final Object[][] requiredClasses;
         private final Object[][] requiredResources;
