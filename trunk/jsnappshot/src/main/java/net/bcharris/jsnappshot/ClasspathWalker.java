@@ -22,7 +22,13 @@ import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 
-// Traverses files on the system classpath
+/**
+ * Traverses files on the system classpath
+ * Walking strategy taken from ClassFinder: http://www.clapper.org/software/java/util/javadocs/util/api/org/clapper/util/classutil/ClassFinder.html
+ * I've considered patching ClassFinder to expose the functionality I want because at the moment much of the good stuff 
+ * is in private methods.  The idea would be to split it into a walking half and an analying half, and I'd just use the
+ * walking half.  Not even convinced of this approach yet, though.
+ */
 class ClasspathWalker {
 
     interface Visitor {
