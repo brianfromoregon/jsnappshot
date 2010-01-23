@@ -9,7 +9,13 @@ import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.ObjectStreamClass;
+import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 import java.util.regex.Pattern;
 
 /**
@@ -94,5 +100,40 @@ public class JSnappshot {
         } catch (ClassNotFoundException ex) {
             throw new RuntimeException("The Snappshot is missing bytecode for a required class.", ex);
         }
+    }
+
+    /**
+     * Write an executable jar to the specified OutputStream which when run, invokes the specified Runnable.
+     * @param entryPoint The entry point of the created executable jar.
+     * @param output The executable jar's bytes will be written to this stream, then it will be closed.
+     * @throws NotSerializableException Some object to be serialized does not implement the java.io.Serializable interface.
+     * @throws IOException An exeception occurred writing to the specified OutputStream.
+     */
+    public static void createExecutableJar(Runnable entryPoint, OutputStream output) throws NotSerializableException, IOException {
+        Snappshot snappshot = createSnappshot(entryPoint);
+        Manifest manifest = new Manifest();
+        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+        manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, Main.class.getName());
+        JarOutputStream jarOutputStream = new JarOutputStream(output, manifest);
+        for (Entry<String, byte[]> entry : snappshot.requiredClasses.entrySet()) {
+            add(entry.getKey().replace('.', '/') + ".class", entry.getValue(), jarOutputStream);
+        }
+        for (Entry<String, byte[]> entry : snappshot.requiredResources.entrySet()) {
+            add(entry.getKey(), entry.getValue(), jarOutputStream);
+        }
+        if (!snappshot.requiredClasses.containsKey(Main.class.getName()))
+        {
+            String mainPath = Main.class.getName().replace('.', '/') + ".class";
+            add(mainPath, ByteStreams.toByteArray(Main.class.getClassLoader().getResourceAsStream(mainPath)), jarOutputStream);
+        }
+        add(Main.ENTRY_POINT_PATH, snappshot.object, jarOutputStream);
+        jarOutputStream.close();
+    }
+
+    private static void add(String path, byte[] data, JarOutputStream target) throws IOException {
+        JarEntry entry = new JarEntry(path);
+        target.putNextEntry(entry);
+        target.write(data);
+        target.closeEntry();
     }
 }
